@@ -1,38 +1,46 @@
-import imghdr
-from pickletools import read_decimalnl_long
-import numpy as np
-import matplotlib.pyplot as plt
 import glob
-import os
 import cv2
-from PIL import Image, ImageFilter
+import numpy as np
 
+def preprocess_images(images) -> dict({'X': np.array, 'Y': np.array}):
+    return make_x_and_y(images)
 
-def preprocess(path):
+def make_x_and_y(images: np.array) -> dict({'X': np.array, 'Y': np.array}):
+    # make the x and y values
+    if len(images) < 3:
+        raise ValueError("Not enough images")
+
+    if len(images) % 2 == 0:
+        X = images[:-1]
+
+    X = images[0::2]
+    Y = images[1::2]
+
+    assert(len(X)-1 == len(Y))
+    return {'X': X, 'Y': Y}
+
+def create_dataset(dirs: str):
+    # read images recursively from path
+    dataset = []
+    for i, dir in enumerate(dirs):
+        print("Reading in images from set {}".format(i))
+        images = read_images(dir)
+        dataset.append(preprocess_images(images))
+    return dataset
+
+# read images directly from path
+def read_images(path):
     # tuple = (r,g,b)
-    # opencv uses bgr
+    # opencv uses BGR
 
-    R = []
-    G = []
-    B = []
+    image_files = glob.glob(path + "/*t*.jpg")
 
-    dir = glob.glob(path + "/*.jpg")
+    first_image = cv2.imread(image_files[0], cv2.IMREAD_GRAYSCALE)
+    image_shape = first_image.shape
 
-    for image in dir:
-        src = cv2.imread(image, cv2.IMREAD_UNCHANGED)
+    images = np.empty(shape=(len(image_files), image_shape[0], image_shape[1]), dtype=np.float16)
+    for i, image_file in enumerate(image_files):
+        image = cv2.imread(image_file, cv2.IMREAD_GRAYSCALE)
+        images[i] = cv2.normalize(image, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
 
-        R.append(src[:,:,2])       #get red pixel values
-        G.append(src[:,:,1])       #get green pixel values
-        B.append(src[:,:,0])      #get blue pixel values
-
-    return (R,G,B)
-
-
-
-
-#rArray = preprocess("car-turn")[0][0]
-#gArray = preprocess("car-turn")[1][0]
-#bArray = preprocess("car-turn")[2][0]
-
-
-
+    return images
