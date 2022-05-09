@@ -1,7 +1,10 @@
 from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, Activation, merge
 from keras.utils.vis_utils import plot_model, model_to_dot
 from keras.models import Model
-import pydot
+from keras import backend
+
+def charbonnier(y_true, y_pred):
+    return backend.sqrt(backend.square(y_true - y_pred) + 0.01**2)
 
 def convolve_and_pool(input, filters):
     block = Conv2D(filters, kernel_size=(3,3), activation='relu', padding='same')(input)
@@ -48,7 +51,7 @@ def create_model(input_shape):
 
     output = convolve_and_upsample(deconv_1, 32)
     output = merge.concatenate([output, input], axis=3)
-    output = Conv2D(1, kernel_size=(3,3), activation='sigmoid')(output)
+    output = Conv2D(1, kernel_size=(1,1), activation='sigmoid')(output)
 
     model = Model(inputs=input, outputs=output)
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
@@ -56,6 +59,6 @@ def create_model(input_shape):
     return model
 
 model = create_model((None, None, 2))
-model.compile(loss="", optimizer="adam", metrics=["accuracy"])
+model.compile(loss=charbonnier, optimizer="adam")
 
 dot = model_to_dot(model, show_shapes=True, show_layer_names=True).write_png('model.png')

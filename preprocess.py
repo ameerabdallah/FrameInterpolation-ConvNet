@@ -3,43 +3,37 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-# def preprocess_images(images) -> dict({'X': np.array, 'Y': np.array}):
-#     return make_x_and_y(images)
-
-# def make_x_and_y(images: np.array) -> dict({'X': np.array, 'Y': np.array}):
-#     # make the x and y values
-#     if len(images) < 3:
-#         raise ValueError("Not enough images")
-
-#     if len(images) % 2 == 0:
-#         X = images[:-1]
-
-#     X = images[::2]
-#     Y = images[1::2]
-
-#     assert(len(X)-1 == len(Y))
-#     return {'X': X, 'Y': Y}
-
 def create_dataset(dirs: str):
     # read images recursively from path
     dataset = []
     for i, dir in enumerate(dirs):
         print("Reading in images from set {}".format(i))
-        dataset.append(read_images(dir))
+        img_set = read_images(dir)
+        # img_set = group_images_in_triples(img_set)
+        dataset.append(img_set)
     return dataset
+
+
 
 def read_images(path, crop_size=(384, 384)):
     image_files = glob.glob(path + "/*t*.jpg")
 
     images = np.empty(shape=(len(image_files), crop_size[0], crop_size[1]), dtype=np.float16)
     first_image = cv2.imread(image_files[0], cv2.IMREAD_GRAYSCALE)
-    crop_data = get_rand_crop(first_image, crop_size)
+    crop_data = get_rand_crop(first_image, crop_size)    
     for i, image_file in enumerate(image_files):
-        image = cv2.imread(image_file, cv2.IMREAD_GRAYSCALE)
-        image = crop_image(image, crop_data)
-        images[i] = cv2.normalize(image, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+            image = cv2.imread(image_file, cv2.IMREAD_GRAYSCALE)
+            image = crop_image(image, crop_data)
+            images[i] = cv2.normalize(image, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
 
     return images
+
+# def group_image_set_by_threes(image_set):
+#     result = [[[] for _ in range(3)] for _ in range(len(image_set))]
+#     for i in range(1, image_set-1):
+#         for j in range(3):
+#             for k in range(3):
+                
 
 def get_rand_crop(image, crop_size=(384, 384)):
     # randomly crop the image
