@@ -1,24 +1,24 @@
 import glob
 import cv2
 import numpy as np
-import tensorflow as tf
 
-def create_dataset(dirs: str):
+def create_dataset(dirs: str, crop_size=(384, 384)):
     # read images recursively from path
     dataset = []
     for i, dir in enumerate(dirs):
-        print("Reading in images from set {}".format(i))
-        img_set = read_images(dir)
+        # print a progress bar
+        print("Reading images into memory... {}/{}\r".format(i+1, len(dirs)), end='', flush=i%25==0)
+        # print("Reading in images from set {}".format(i))
+        img_set = read_images(dir, crop_size)
         # img_set = group_images_in_triples(img_set)
         dataset.append(img_set)
+    print("\n")
     return dataset
-
-
 
 def read_images(path, crop_size=(384, 384)):
     image_files = glob.glob(path + "/*t*.jpg")
 
-    images = np.empty(shape=(len(image_files), crop_size[0], crop_size[1]), dtype=np.float16)
+    images = np.empty(shape=(len(image_files), crop_size[0], crop_size[1]), dtype=np.float32)
     first_image = cv2.imread(image_files[0], cv2.IMREAD_GRAYSCALE)
     crop_data = get_rand_crop(first_image, crop_size)    
     for i, image_file in enumerate(image_files):
@@ -28,12 +28,6 @@ def read_images(path, crop_size=(384, 384)):
 
     return images
 
-# def group_image_set_by_threes(image_set):
-#     result = [[[] for _ in range(3)] for _ in range(len(image_set))]
-#     for i in range(1, image_set-1):
-#         for j in range(3):
-#             for k in range(3):
-                
 
 def get_rand_crop(image, crop_size=(384, 384)):
     # randomly crop the image
