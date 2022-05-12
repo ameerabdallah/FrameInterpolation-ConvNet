@@ -6,6 +6,11 @@ import numpy as np
 import os
 from random import shuffle
 
+model_dir = 'models_1/'
+model_name = model_dir+'model.h5'
+
+os.makedirs(model_dir, exist_ok=True)
+
 TEST_PATH = 'F:\\ConvNet-DataSet\\QVI-960\\*'
 VID_BATCH_SIZE = 100
 DIRS = glob.glob(TEST_PATH)
@@ -36,8 +41,8 @@ def print_image(image):
 
 # if the file 'model.h5' exists, load it, otherwise create a new model
 model: keras.models.Model = None
-if os.path.isfile('model.h5'):
-    model = keras.models.load_model('model.h5', custom_objects={'charbonnier': charbonnier})
+if os.path.isfile(model_name):
+    model = keras.models.load_model(model_name, custom_objects={'charbonnier': charbonnier})
 else:
     model = create_model((None, None, 2))
 
@@ -48,6 +53,7 @@ for i in range(len(DIRS)//VID_BATCH_SIZE):
     dirs = DIRS[i*VID_BATCH_SIZE:i*VID_BATCH_SIZE+VID_BATCH_SIZE]
     dataset = create_dataset(dirs, CROP_SIZE)
     fit_model(model, dataset, epochs=EPOCHS, batch_size=2)
-    model.save('model.h5')
+    if i % 10 == 0 or i < 5:
+        model.save(model_name+'.'+str(i))
 
 

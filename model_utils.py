@@ -11,22 +11,19 @@ def charbonnier(y_true, y_pred):
     return backend.sqrt(backend.square(y_true - y_pred) + 0.01**2)
 
 def convolve_and_pool(input, filters):
-    block = Conv2D(filters, kernel_size=(3,3), activation='relu', padding='same')(input)
-    block = Conv2D(filters, kernel_size=(3,3), activation='relu', padding='same')(block)
-    block = Conv2D(filters, kernel_size=(3,3), activation='relu', padding='same')(block)
+    block = convolve(input, filters)
+    block = convolve(block, filters)
     block = MaxPooling2D(pool_size=(2, 2))(block)
     return block
 
 def convolve_and_upsample(input, filters):
-    block = Conv2D(filters, kernel_size=(3,3), activation='relu', padding='same')(input)
-    block = Conv2D(filters, kernel_size=(3,3), activation='relu', padding='same')(block)
-    block = Conv2D(filters, kernel_size=(3,3), activation='relu', padding='same')(block)
+    block = convolve(input, filters)
+    block = convolve(block, filters)
     block = UpSampling2D(size=(2, 2))(block)
     return block
 
 def convolve(input, filters):
-    block = Conv2D(filters, kernel_size=(3,3), padding='same')(input)
-    block = Activation('relu')(block)
+    block = Conv2D(filters, kernel_size=(3,3), activation='relu',padding='same')(input)
     return block
 
 def create_model(input_shape):
@@ -42,6 +39,7 @@ def create_model(input_shape):
     conv_5 = convolve_and_pool(conv_4, 1024)
 
     deconv_5 = convolve(conv_5, 1024)
+    deconv_5 = convolve(deconv_5, 1024)
     deconv_5 = merge.concatenate([deconv_5, conv_5], axis=3)
 
     deconv_4 = convolve_and_upsample(deconv_5, 512)
@@ -57,6 +55,7 @@ def create_model(input_shape):
     deconv_1 = merge.concatenate([deconv_1, conv_1], axis=3)
 
     output = convolve_and_upsample(deconv_1, 32)
+    output = merge.concatenate([output, input], axis=3)
     output = Conv2D(1, kernel_size=(1,1),  activation='sigmoid')(output)
 
     model = Model(inputs=input, outputs=output)
