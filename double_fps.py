@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from model_utils import charbonnier
 import os
+import time
 
 def double_fps_color(model_path, video_path, output_path):
     model = load_model(model_path, custom_objects={'charbonnier': charbonnier})
@@ -34,12 +35,16 @@ def double_fps_color(model_path, video_path, output_path):
     
     count = 1
     
+    t1 = time.perf_counter()
     while success:
+        t2 = time.perf_counter()
+        delta = t2-t1
+        print("predicted-frames: {}, seconds: {:.2f}, speed: {:.2f}fps | {:.3f}/100%\r".format(count, count/fps, count/delta, (count*100/num_of_frames)), end="")
+        
         success, frame_3 = cap.read()
         if not success:
             break
         
-        print("Processed(frames: {}, seconds: {:.2f}) | {:.3f}/100%\r".format(count, count/fps, (count*100/num_of_frames)), end="")
         
         frame_3_temp = frame_3
         frame_3 = preprocess_frame(frame_3, padding)
@@ -111,4 +116,4 @@ def preprocess_frame(frame, padding):
 
 model_path = "models_1/model.h5.100"
 input_video_path = "F:\\Test-Data\\input-15.mp4"
-quadruple_fps_color(model_path, input_video_path, "F:\\Test-Data\\output.mp4")
+quadruple_fps_color(model_path, input_video_path, "F:\\Test-Data\\timer-test-output.mp4")
